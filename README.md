@@ -189,3 +189,85 @@ Follow the video to for an explanation on the `Page Object Model` and `Page Map 
     - `[Category("cards")]`
     - We can use Categories when running our tests. To run only the tests with the Category of "cards", we would do:
         - `$ dotnet test --filter testcategory=cards`
+
+
+## Chapter 5 - Customizing WebDriver
+
+1. Start by creating a `Selenium` folder in our `Framework` project
+
+2. Create a `Driver.cs` file in `Selenium`. This is where our wrapper of WebDriver will exist.
+
+3. The key to achieving the simplicity of a `static` even though it's not a singleton is with the `[ThreadStatic]` attribute.
+    ```c#
+    [ThreadStatic]
+    private static IWebDriver _driver;
+
+    public static void Init()
+    {
+        _driver = new ChromeDriver();
+    }
+
+    public static IWebDriver Current => _driver ?? throw new System.ArgumentException("_driver is null.");
+    ```
+
+    - This is the bread and butter of this approach. `_driver` is the instance of WebDriver on a thread.
+    - `Current` is how you access the current instance of WebDriver for the test you're on
+
+4. In the `BeforeEach()` method of CardTests, you can now use `Driver.Init();` and remove the "global" `IWebDriver driver` at the top.
+
+5. Then create a "Pages Wrapper"
+    1. Create `Pages.cs` file in `Royale.Pages` directory
+    2. Create a field for each page we have
+        ```c#
+        [ThreadStatic]
+        public static CardsPage Cards;
+
+        [ThreadStatic]
+        public static CardDetailsPage CardDetails;
+
+        public static void Init()
+        {
+            Cards = new CardsPage(Driver.Current);
+            CardDetails = new CardDetailsPage(Driver.Current);
+        }
+        ```
+
+6. In the tests, we can get rid of any lines that say `new Page()` because our Pages Wrapper handles that for us
+    - Replace: `var cardsPage = new CardsPage(Driver.Current);`
+    - With: `Pages.Cards`
+
+7. In our `Driver` class, let's add a way to navigate to a URL so we don't have to say `Driver.Current.Url`
+    ```c#
+    public static void Goto(string url)
+    {
+        if (!url.StartsWith("http"))
+        {
+            url = $"http://{url}";
+        }
+
+        Debug.WriteLine(url);
+        Current.Navigate().GoToUrl(url);
+    }
+    ```
+
+8. Your `BeforeEach()` method should now look like this:
+    ```c#
+    [SetUp]
+    public void BeforeEach()
+    {
+        Driver.Init();
+        Pages.Init();
+        Driver.Goto("https://statsroyale.com");
+    }
+    ```
+
+9. Now add a `FindElement()` and `FindElements()` method to Driver.
+
+10. Go to each of the Page Objects and replace `_driver` with `Driver`.
+    - We no longer need the `IWebDriver _driver` field in the Page Maps
+    - We no longer need the constructors in the Page Maps
+    - We no longer need to pass in `IWebDriver driver` in Page Object constructors!
+
+11. Yes, a lot of code is deleted, but that's a good thing!
+
+12. The challenge is to add a `Quit()` method to our Driver class to get rid of `Driver.Current.Quit();` in the `AfterEach()`.

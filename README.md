@@ -37,3 +37,58 @@
 8. Run the Tests
     - `$ dotnet test`
     - This will run all the tests, but you only have one right now. It should pass.
+
+
+## Chapter 2 - Script Some Tests
+
+> NOTE: Our application under test (website) is https://statsroyale.com
+
+1. Change the name of the Test Class and Test Method so they make more sense
+    - Test Class from `Tests` to `CardTests`
+    - File name from `Tests.cs` to `CardTests.cs`
+    - Test Method from `Test1()` to `Ice_Spirit_is_on_Cards_Page()`
+
+2. Install Selenium NuGet (package) with PackSharp
+    - Open Command Palette > select `PackSharp: Bootstrap Selenium` > add to `Royale.Tests`, our Test Project
+    - If you open the `Royale.Tests.csproj` file, you will see that Selenium packages have been added
+    - You will also see a `_drivers` directory is added at the Workspace root
+
+> NOTE: This command installs the **latest** versions of chromedriver and the Selenium packages.
+
+3. Use Selenium in our CardTests.cs file
+    - Within the CardTests class, add the `IWebDriver driver;` field to the top
+    - Resolve the error by hovering the red line and click on the lightbulb
+        - The first option will want you to add the `using OpenQA.Selenium;` statement. Select that one
+        - The error will go away and you will see that using statement is added automatically
+
+4. SetUp and TearDown methods
+    - The [SetUp] method is run *before each* test. Change the method name from `Setup()` to `BeforeEach()`
+    - Add a [TearDown] method which runs *after each* test. Call this method `AfterEach()`
+
+5. Within AfterEach(), add:
+    - `driver.Quit();`
+    - This will close the driver after each test is finished
+
+6. Within BeforeEach(), add:
+    - `driver = new ChromeDriver(<path-to-chromedriver>);`
+    - This will open a new Chrome browser for every test
+    - "Point" the ChromeDriver() to wherever you store your `chromedriver` or `chromedriver.exe`.
+
+> NOTE: Everyone manages their drivers (like `chromedriver`, `geckodriver`, etc.) differently. Use your preferred method.
+
+7. Write the first test. The steps are:
+    1. Go to https://statsroyale.com
+    2. Click on Cards link
+    3. Assert Ice Spirit is displayed
+
+8. For the second test, the steps are:
+    1. Go to https://statsroyale.com
+    2. Click on Cards link
+    3. Click on Ice Spirit card
+    4. Assert the basic headers are correct. These headers are:
+        - Name ("Ice Spirit")
+        - Type ("Troop")
+        - Arena ("Arena 8")
+        - Rarity ("Common")
+
+9. There's a lot of code in this one, so make sure to pause and replay as much as you need :)

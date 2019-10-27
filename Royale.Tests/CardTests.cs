@@ -23,7 +23,7 @@ namespace Tests
         [TearDown]
         public void AfterEach()
         {
-            Driver.Current.Quit();
+            Driver.Quit();
         }
 
         [Test]

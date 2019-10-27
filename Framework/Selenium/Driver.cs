@@ -39,5 +39,10 @@ namespace Framework.Selenium
         {
             return Current.FindElements(by);
         }
+
+        public static void Quit()
+        {
+            Current.Quit();
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -39,7 +40,7 @@ namespace Tests
 
             var (category, arena) = cardDetails.GetCardCategory();
             var cardName = cardDetails.Map.CardName.Text;
-            var cardRarity = cardDetails.Map.CardRarity.Text;
+            var cardRarity = cardDetails.Map.CardRarity.Text.Split('\n').Last();
 
             Assert.AreEqual("Ice Spirit", cardName);
             Assert.AreEqual("Troop", category);

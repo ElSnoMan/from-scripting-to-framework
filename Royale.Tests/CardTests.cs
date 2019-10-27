@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Framework.Models;
@@ -26,24 +27,25 @@ namespace Tests
             Driver.Quit();
         }
 
-        [Test]
-        public void Ice_Spirit_is_on_Cards_Page()
-        {
-            var iceSpirit = Pages.Cards.Goto().GetCardByName("Ice Spirit");
-            Assert.That(iceSpirit.Displayed);
-        }
-
-        static string[] cardNames = { "Ice Spirit", "Mirror" };
+        static IList<Card> apiCards = new ApiCardService().GetAllCards();
 
         [Test, Category("cards")]
-        [TestCaseSource("cardNames")]
+        [TestCaseSource("apiCards")]
         [Parallelizable(ParallelScope.Children)]
-        public void Card_headers_are_correct_on_Card_Details_Page(string cardName)
+        public void Card_is_on_Cards_Page(Card card)
         {
-            Pages.Cards.Goto().GetCardByName(cardName).Click();
+            var cardOnPage = Pages.Cards.Goto().GetCardByName(card.Name);
+            Assert.That(cardOnPage.Displayed);
+        }
+
+        [Test, Category("cards")]
+        [TestCaseSource("apiCards")]
+        [Parallelizable(ParallelScope.Children)]
+        public void Card_headers_are_correct_on_Card_Details_Page(Card card)
+        {
+            Pages.Cards.Goto().GetCardByName(card.Name).Click();
 
             var cardOnPage = Pages.CardDetails.GetBaseCard();
-            var card = new InMemoryCardService().GetCardByName(cardName);
 
             Assert.AreEqual(card.Name, cardOnPage.Name);
             Assert.AreEqual(card.Type, cardOnPage.Type);

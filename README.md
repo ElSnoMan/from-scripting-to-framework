@@ -136,3 +136,56 @@ Follow the video to for an explanation on the `Page Object Model` and `Page Map 
     - Take a moment to pause the video and copy the code to move forward
 
 10. At the end of the video, run your second test. It should fail! Your challenge is to solve this error so the test passes.
+
+
+## Chapter 4 - Models and Services
+
+1. Copy and Paste the second test to make a third test. However, this test will be for the "Mirror" card, so change the values in the test accordingly.
+
+2. In the Framework project, make a new folder called `Models` and move the `Class1.cs` file into it.
+
+3. Rename the file to `MirrorCard.cs` and change the class name too
+
+4. We'll be adding the card properties that we care about and give them default values.
+
+> NOTE: Some portions are sped up, so just pause the video when it gets back to regular speed and copy as needed.
+
+5. Because `MirrorCard` and `IceSpiritCard` share the same properties, we can create a "base" `Card` with these properties and have our cards inherit it. This is very similar to how our `PageBase` class works. Every page on the website has access to the `HeaderNav`, right? Instead of repeating the header navigation bar on every page, we can create it once and then share it to every page! This helps us avoid repeating ourselves as well as simplifying our code.
+
+    - Copy and Paste the `MirrorCard` into a new file called `IceSpiritCard.cs` in Models.
+    - Change the default values to the Ice Spirit values
+
+6. Now we can bring this all together by creating a `GetBaseCard()` method in our `CardDetailsPage`. Pause the video as needed.
+
+7. We can use this method in the Mirror test by getting two cards:
+    - `var card = cardDetails.GetBaseCard();`
+        - This card is the one we get off of the page using Selenium and our Page objects
+    - `var mirror = new MirrorCard();`
+        - This card has the actual values that we expect our Mirror Card to have
+
+8. Assert that the expected values from our `var mirror` card match the actual values we received from `var card`.
+
+9. Our first Card Services
+
+    These "services" are abstractions of how we end up getting cards from a data store.
+
+    The "In Memory" card service will help with getting cards from local, hard-coded values we've specified in our Models directory, but ultimately we'd like to get these values from actual data stores like a database. We will be doing that in a future chapter :)
+
+10. Now that the Services are complete and being used in the test, our 2nd and 3rd tests are almost identical. The only difference are the names!
+
+    - We can now leverage the `[TestCase]` and `[TestSource]` attributes from the `NUnit Test Framework`
+    - These will "feed" values into the test
+    - This turns a single Test Method into multiple Test Cases!
+
+11. We can use the `[Parallelizable]` attribute to make these Test Cases run in parallel!
+    - `[Parallelizable(ParallelScope.Children)]`
+
+12. Run the 3rd test. It will spin up two browsers at the same time, but most likely both with fail. What happened?
+    - You will also notice that one of the two browsers doesn't close even after failing. Can you guess why?
+    - The answer is that we are instantiating a single WebDriver for both tests, so they are fighting each other over the driver!
+    - We will solve this in the next chapter
+
+13. Last thing we'll do is add the `[Category]` attribute to our test
+    - `[Category("cards")]`
+    - We can use Categories when running our tests. To run only the tests with the Category of "cards", we would do:
+        - `$ dotnet test --filter testcategory=cards`

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using Framework.Models;
+using Framework.Selenium;
 using Framework.Services;
 using NUnit.Framework;
 using OpenQA.Selenium;
@@ -11,43 +12,25 @@ namespace Tests
 {
     public class CardTests
     {
-        IWebDriver driver;
-
         [SetUp]
         public void BeforeEach()
         {
-            driver = new ChromeDriver(Path.GetFullPath(@"../../../../" + "_drivers"));
-            driver.Url = "https://statsroyale.com";
+            Driver.Init();
+            Pages.Init();
+            Driver.Goto("https://statsroyale.com");
         }
 
         [TearDown]
         public void AfterEach()
         {
-            driver.Quit();
+            Driver.Quit();
         }
 
         [Test]
         public void Ice_Spirit_is_on_Cards_Page()
         {
-            var cardsPage = new CardsPage(driver);
-            var iceSpirit = cardsPage.Goto().GetCardByName("Ice Spirit");
+            var iceSpirit = Pages.Cards.Goto().GetCardByName("Ice Spirit");
             Assert.That(iceSpirit.Displayed);
-        }
-
-        [Test]
-        public void Ice_Spirit_headers_are_correct_on_Card_Details_Page()
-        {
-            new CardsPage(driver).Goto().GetCardByName("Ice Spirit").Click();
-            var cardDetails = new CardDetailsPage(driver);
-
-            var (category, arena) = cardDetails.GetCardCategory();
-            var cardName = cardDetails.Map.CardName.Text;
-            var cardRarity = cardDetails.Map.CardRarity.Text.Split('\n').Last();
-
-            Assert.AreEqual("Ice Spirit", cardName);
-            Assert.AreEqual("Troop", category);
-            Assert.AreEqual("Arena 8", arena);
-            Assert.AreEqual("Common", cardRarity);
         }
 
         static string[] cardNames = { "Ice Spirit", "Mirror" };
@@ -57,10 +40,9 @@ namespace Tests
         [Parallelizable(ParallelScope.Children)]
         public void Card_headers_are_correct_on_Card_Details_Page(string cardName)
         {
-            new CardsPage(driver).Goto().GetCardByName(cardName).Click();
-            var cardDetails = new CardDetailsPage(driver);
+            Pages.Cards.Goto().GetCardByName(cardName).Click();
 
-            var cardOnPage = cardDetails.GetBaseCard();
+            var cardOnPage = Pages.CardDetails.GetBaseCard();
             var card = new InMemoryCardService().GetCardByName(cardName);
 
             Assert.AreEqual(card.Name, cardOnPage.Name);

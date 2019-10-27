@@ -92,3 +92,47 @@
         - Rarity ("Common")
 
 9. There's a lot of code in this one, so make sure to pause and replay as much as you need :)
+
+
+## Chapter 3 - Page Object Model
+
+Follow the video to for an explanation on the `Page Object Model` and `Page Map Pattern`.
+
+1. Within the Royale project, create a `Pages` directory. This is where all of our Page objects will live.
+
+2. Move the `Class1.cs` file into `Pages` and rename it to `HeaderNav.cs`
+
+3. Within the file, rename `Class1` to `HeaderNav` and then make another class called `HeaderNavMap`
+
+4. Use PackSharp to restructure our packages and dependencies so we leverage Framework and Royale projects
+    1. Move Selenium to the `Framework` project
+        - Open Command Palette > `PackSharp: Bootstrap Selenium` > select `Framework`
+    2. Remove Selenium from `Royale.Tests` project
+        - Open Command Palette > `PackSharp: Remove Package` > select `Royale.Tests` > select `Selenium.Support`
+        - Also remove `Selenium.WebDriver`
+
+5. Framework is our base, so we want the projects to reference each other in a linear way.
+
+    Framework -> Royale -> Royale.Tests
+
+    `Royale.Tests` will reference `Royale` which references `Framework`
+
+    - Open Command Palette > `PackSharp: Add Project Reference` > select `Royale.Tests` > select `Royale`
+    - Open Command Palette > `PackSharp: Add Project Reference` > select `Royale` > select `Framework`
+
+6. Now we can bring in `using OpenQA.Selenium` in our `HeaderNav.cs` file
+
+> NOTE: The rest of this video is very "code-heavy", so make sure to follow along there
+
+7. The naming convention for Pages and Page Maps is very simple. If you have a Home page, then you would do this:
+    - Page => `HomePage`
+    - Map => `HomePageMap`
+
+8. In the video, there is a "jump" from `11:22` to `11:25` where I am able to use the `Map.Card()` immediately. At this point, you will have an error. All you need to do is:
+    - Add the `public readonly CardPageMap Map;` field at the top of the `CardsPage` class and the Constructor as well
+    - You will see the needed code at `11:43`. Sorry about that!
+
+9. Card Details Page and Map
+    - Take a moment to pause the video and copy the code to move forward
+
+10. At the end of the video, run your second test. It should fail! Your challenge is to solve this error so the test passes.

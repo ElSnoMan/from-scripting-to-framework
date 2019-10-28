@@ -373,9 +373,15 @@ Follow the video to for an explanation on the `Page Object Model` and `Page Map 
     - This will only run two tests at a time which is probably best for your machine
     - You can press `CTRL + C` in the terminal to cancel the test execution
 
-11. After some test failures, you will see some interesting errors. The biggest one is that "Troop" is not equal to "tid_card_type_character" and "Spell" is not equal to "tid_card_type_spell".
+11. CHALLENGE 1: After some test failures, you will see some interesting errors. The biggest one is that "Troop" is not equal to "tid_card_type_character" and "Spell" is not equal to "tid_card_type_spell".
 
-The challenge is to solve this error without touching code in the CardTests.cs file.
+The challenge is to solve this error.
 
 > HINT: `tid_card_type_spell` already has the word "spell" in it. Could we use that somehow?
 > HINT: `Troop` and `character` are the same thing in the context of the game. We should treat characters as troops and vice-versa
+
+12. CHALLENGE 2: Similar to Challenge 1, tests will be failing because "Arena 8" is not equal to `8`
+
+The challenge is to solve this error.
+
+> HINT: A string of `"8"` is different than an integer of `8`

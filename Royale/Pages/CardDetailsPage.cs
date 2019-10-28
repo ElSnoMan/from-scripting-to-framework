@@ -14,21 +14,21 @@ namespace Royale.Pages
             Map = new CardDetailsPageMap();
         }
 
-        public (string Category, string Arena) GetCardCategory()
+        public (string Type, string Arena) GetCardCategory()
         {
             var categories = Map.CardCategory.Text.Split(',');
-            return (categories[0].Trim(), categories[1].Trim());
+            return (categories[0].ToLower(), categories[1].Trim());
         }
 
         public Card GetBaseCard()
         {
-            var (category, arena) = GetCardCategory();
+            var (type, arena) = GetCardCategory();
 
             return new Card
             {
                 Name = Map.CardName.Text,
                 Rarity = Map.CardRarity.Text.Split('\n').Last(),
-                Type = category,
+                Type = type,
                 Arena = arena
             };
         }

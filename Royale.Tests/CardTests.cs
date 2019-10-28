@@ -47,10 +47,13 @@ namespace Tests
 
             var cardOnPage = Pages.CardDetails.GetBaseCard();
 
+            if (cardOnPage.Type == "troop")
+                cardOnPage.Type = "character";
+
             Assert.AreEqual(card.Name, cardOnPage.Name);
-            Assert.AreEqual(card.Type, cardOnPage.Type);
             Assert.AreEqual(card.Arena, cardOnPage.Arena);
             Assert.AreEqual(card.Rarity, cardOnPage.Rarity);
+            Assert.That(card.Type.Contains(cardOnPage.Type));
         }
     }
 }

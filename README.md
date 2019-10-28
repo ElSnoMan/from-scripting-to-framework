@@ -271,3 +271,120 @@ Follow the video to for an explanation on the `Page Object Model` and `Page Map 
 11. Yes, a lot of code is deleted, but that's a good thing!
 
 12. The challenge is to add a `Quit()` method to our Driver class to get rid of `Driver.Current.Quit();` in the `AfterEach()`.
+
+
+## Chapter 6 - Test Data from an API
+
+1. From Postman, we saw the the /cards endpoint returned all of the cards that exist in the game. However, they had a different shape than our Card class. Update our Card class to include these new properties:
+
+    ```c#
+    public class Card
+    {
+        public virtual string Id { get; set; }
+
+        public virtual string Name { get; set; }
+
+        public virtual string Icon { get; set; }
+
+        public virtual int Cost { get; set; }
+
+        public virtual string Rarity { get; set; }
+
+        public virtual string Type { get; set; }
+
+        public virtual string Arena { get; set; }
+    }
+    ```
+
+2. We want to leverage that endpoint by creating an ApiCardService
+    - Create `ApiCardService.cs` within `Framework.Services`
+    - Implement the `ICardService` interface
+
+3. Install the `Newtonsoft.Json` package to the `Framework` project
+    - Open Command Palette > `PackSharp: Add Package` > search `Newtonsoft` > select `Newtonsoft.Json`
+
+4. Install the `RestSharp` package to the `Framework` project
+    - Open Command Palette > `PackSharp: Add Package` > search `RestSharp` > select `RestSharp`
+
+5. Within the `ApiCardService` class, we will use RestSharp to make the call just like PostMan. We'll call this method `GetAllCards()`
+
+    ```c#
+    public const string CARDS_API = "https://statsroyale.com/api/cards";
+
+    public IList<Card> GetAllCards()
+    {
+        var client = new RestClient(CARDS_API);
+        var request = new RestRequest
+        {
+            Method = Method.GET,
+            RequestFormat = DataFormat.Json
+        };
+
+        var response = client.Execute(request);
+
+        if (response.StatusCode != System.Net.HttpStatusCode.OK)
+        {
+            throw new System.Exception("/cards endpoint failed with " + response.StatusCode);
+        }
+
+        return JsonConvert.DeserializeObject<IList<Card>>(response.Content);
+    }
+    ```
+
+6. Now let's implement the `GetCardByName(string cardName)` method
+
+    ```c#
+    public Card GetCardByName(string cardName)
+    {
+        var cards = GetAllCards();
+        return cards.FirstOrDefault(card => card.Name == cardName);
+    }
+    ```
+
+7. Now we can use the list of cards from the API rather than our hard-coded list of two cards. In CardTests, put this above our first test:
+    ```c#
+    static IList<Card> apiCards = new ApiCardService().GetAllCards();
+    ```
+
+8. Our tests can now leverage this list of cards using the `[TestCaseSource]` attribute. Our first test should then look like:
+
+    ```c#
+    [Test, Category("cards")]
+    [TestCaseSource("apiCards")]
+    [Parallelizable(ParallelScope.Children)]
+    public void Card_is_on_Cards_Page(Card card)
+    {
+        var cardOnPage = Pages.Cards.Goto().GetCardByName(card.Name);
+        Assert.That(cardOnPage.Displayed);
+    }
+    ```
+    - We have added the "cards" Category to the test
+    - The TestCaseSource is now coming from "apiCards"
+    - We've added the same [Parallelizable] attribute to this test
+    - Changed the test name to better reflect that it tests all cards and not just Ice Spirit anymore
+    - The object we are passing into the test is not a `string`, but a `Card` object.
+
+9. Update the second test to also use `apiCards`
+
+10. Run the tests but use the `NUnit.NumberOfTestWorkers=2` argument so you don't overload your machine
+    ```bash
+    $ dotnet test --filter testcategory=cards -- NUnit.NumberOfTestWorkers=2
+    ```
+    - This will only run two tests at a time which is probably best for your machine
+    - You can press `CTRL + C` in the terminal to cancel the test execution
+
+11. CHALLENGE 1: After some test failures, you will see some interesting errors. The biggest one is that "Troop" is not equal to "tid_card_type_character" and "Spell" is not equal to "tid_card_type_spell".
+
+The challenge is to solve this error.
+
+> HINT: `tid_card_type_spell` already has the word "spell" in it. Could we use that somehow?
+> HINT: `Troop` and `character` are the same thing in the context of the game. We should treat characters as troops and vice-versa
+
+12. CHALLENGE 2: Similar to Challenge 1, tests will be failing because "Arena 8" is not equal to `8`
+
+The challenge is to solve this error.
+
+> HINT: A string of `"8"` is different than an integer of `8`
+> HINT: Be aware that some cards have an Arena of `0` because they are playable in the "Training Camp". This is why we need to understand the data we're working with. Otherwise, you wouldn't be testing for those values! Check out the `Baby Dragon` card.
+
+Since the recording, they have slightly changed the way their pages load. Because of this, you may experience "flakiness" because we are lacking any waits. We will be discussing waits in Chapter 7 and 12.

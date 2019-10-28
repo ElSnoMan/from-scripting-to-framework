@@ -12,6 +12,6 @@ namespace Framework.Models
 
         public override string Type { get; set; } = "Troop";
 
-        public override string Arena { get; set; } = "Arena 8";
+        public override int Arena { get; set; } = 8;
     }
 }

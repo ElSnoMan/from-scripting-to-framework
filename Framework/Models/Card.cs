@@ -14,6 +14,6 @@ namespace Framework.Models
 
         public virtual string Type { get; set; }
 
-        public virtual string Arena { get; set; }
+        public virtual int Arena { get; set; }
     }
 }

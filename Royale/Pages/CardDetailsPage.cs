@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Framework.Models;
 using Framework.Selenium;
@@ -14,10 +15,22 @@ namespace Royale.Pages
             Map = new CardDetailsPageMap();
         }
 
-        public (string Type, string Arena) GetCardCategory()
+        public (string Type, int Arena) GetCardCategory()
         {
-            var categories = Map.CardCategory.Text.Split(',');
-            return (categories[0].ToLower(), categories[1].Trim());
+            var categories = Map.CardCategory.Text.Split(','); // "Troop, Arena 8" => ["Troop", " Arena 8"]
+            var type = categories[0].ToLower(); // "Troop" => "troop"
+            var arena = categories[1].Trim().Split(' ').Last(); // " Arena 8" => "8"
+
+            int intArena;
+            if (int.TryParse(arena, out intArena))
+            {
+                return (type, intArena);
+            }
+            else
+            {
+                // The Arena was "Training Camp" and should return 0
+                return (type, 0);
+            }
         }
 
         public Card GetBaseCard()

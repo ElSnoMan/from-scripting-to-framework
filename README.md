@@ -385,3 +385,6 @@ The challenge is to solve this error.
 The challenge is to solve this error.
 
 > HINT: A string of `"8"` is different than an integer of `8`
+> HINT: Be aware that some cards have an Arena of `0` because they are playable in the "Training Camp". This is why we need to understand the data we're working with. Otherwise, you wouldn't be testing for those values! Check out the `Baby Dragon` card.
+
+Since the recording, they have slightly changed the way their pages load. Because of this, you may experience "flakiness" because we are lacking any waits. We will be discussing waits in Chapter 7 and 12.

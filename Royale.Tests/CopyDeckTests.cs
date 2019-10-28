@@ -27,6 +27,7 @@ namespace Tests
         public void User_can_copy_the_deck()
         {
             Pages.DeckBuilder.Goto();
+            Driver.Wait.Until(drvr => Pages.DeckBuilder.Map.AddCardsManuallyLink.Displayed);
             Pages.DeckBuilder.AddCardsManually();
             Driver.Wait.Until(drvr => Pages.DeckBuilder.Map.CopyDeckIcon.Displayed);
 

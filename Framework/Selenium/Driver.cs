@@ -13,10 +13,15 @@ namespace Framework.Selenium
         [ThreadStatic]
         public static Wait Wait;
 
+        [ThreadStatic]
+        public static Window Window;
+
         public static void Init()
         {
             _driver = DriverFactory.Build(FW.Config.Driver.Browser);
             Wait = new Wait(FW.Config.Driver.WaitSeconds);
+            Window = new Window();
+            Window.Maximize();
         }
 
         public static IWebDriver Current => _driver ?? throw new NullReferenceException("_driver is null.");
@@ -48,6 +53,13 @@ namespace Framework.Selenium
             {
                 FoundBy = by
             };
+        }
+
+        public static void TakeScreenshot(string imageName)
+        {
+            var ss = ((ITakesScreenshot)Current).GetScreenshot();
+            var ssFileName = Path.Combine(FW.CurrentTestDirectory.FullName, imageName);
+            ss.SaveAsFile($"{ssFileName}.png", ScreenshotImageFormat.Png);
         }
 
         public static void Quit()

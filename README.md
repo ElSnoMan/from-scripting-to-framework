@@ -1193,3 +1193,184 @@ They look identical, but there is a big difference. The string we get back from 
 13. CHALLENGE: I bet you already have some ideas for things we could put into our framework-config.json. For this challenge, add a "wait" property to hold the default number of seconds that we want to use when instantiating our Wait class.
 
 > HINT: We're instantiating Wait in Driver.Init()
+
+
+## Chapter 11 - TestBase and Outcomes
+
+1. Create a `Base` folder within `Royale.Tests`
+
+2. Create `TestBase.cs` within that `Base` folder
+
+3. In one of our test suites, copy the `[OneTimeSetUp]`, `[SetUp]` and `[TearDown]` methods and paste them into our TestBase class
+
+    ```c#
+    public abstract class TestBase
+    {
+        [OneTimeSetUp]
+        public virtual void BeforeAll()
+        {
+            FW.SetConfig();
+            FW.CreateTestResultsDirectory();
+        }
+
+        [SetUp]
+        public virtual void BeforeEach()
+        {
+            FW.SetLogger();
+            Driver.Init();
+            Pages.Init();
+            Driver.Goto(FW.Config.Test.Url);
+        }
+
+        [TearDown]
+        public virtual void AfterEach()
+        {
+            Driver.Quit();
+        }
+    }
+    ```
+
+    - TestBase is an abstract class
+
+4. In our test suites, delete the `[OneTimeSetUp]`, `[SetUp]` and `[TearDown]` methods
+
+5. Our test classes should now inherit TestBase
+
+    ```c#
+    public class CopyDeckTests : TestBase
+    ```
+
+6. Run a test and you'll see nothing has changed!
+
+7. In our `[TearDown]` method, now in TestBase, we'll handle the outcome of the test
+
+    ```c#
+    [TearDown]
+    public virtual void AfterEach()
+    {
+        var outcome = TestContext.CurrentContext.Result.Outcome.Status;
+
+        if (outcome == TestStatus.Passed)
+        {
+            FW.Log.Info("Outcome: Passed");
+        }
+        else if (outcome == TestStatus.Failed)
+        {
+            FW.Log.Info("Outcome: Failed");
+        }
+        else
+        {
+            FW.Log.Warning("Outcome: " + outcome);
+        }
+
+        Driver.Quit();
+    }
+    ```
+
+8. We want to take a screenshot if our test fails. Let's add that functionality somewhere in our Driver class
+
+    ```c#
+    public static void TakeScreenshot(string imageName)
+    {
+        var ss = ((ITakesScreenshot)Current).GetScreenshot();
+        var ssFileName = Path.Combine(FW.CurrentTestDirectory.FullName, imageName);
+        ss.SaveAsFile($"{ssFileName}.png", ScreenshotImageFormat.Png);
+    }
+    ```
+
+9. Now add `TakeScreenshot()` when our test fails
+
+    ```c#
+    else if (outcome == TestStatus.Failed)
+    {
+        Driver.TakeScreenshot("test_failed");
+        FW.Log.Info("Outcome: Failed");
+    }
+    ```
+
+10. Run a test that fails. You may need to force a failure with `Assert.Fail();`
+
+11. Open the test's result directory
+    - There should be a `test_failed.png` along with the `log.txt`
+
+#### BONUS: Maximizing a Window
+
+We touched on this in Chapter 2. For Windows, it's pretty easy:
+
+```c#
+public IWebDriver BuildChrome()
+{
+    var options = new ChromeOptions();
+    options.AddArgument("--start-maximized");
+    return new ChromeDriver(options);
+}
+```
+
+or
+
+```c#
+driver.Manage().Window.Maximize();
+```
+
+However, this may not work for Mac or Linux. Let's go over a method that works cross-platform.
+
+1. Create `Window.cs` under `Framework.Selenium`
+
+2. We'll add a few methods to start out
+
+    ```c#
+    public ReadOnlyCollection<string> CurrentWindows => Driver.Current.WindowHandles;
+
+    public void SwitchTo(int windowIndex)
+    {
+        Driver.Current.SwitchTo().Window(CurrentWindows[windowIndex]);
+    }
+    ```
+
+3. Add a property to get the current ScreenSize so we know the amount of space we're working with
+
+> NOTE: This is different than what's in the video because of changes made to .NET Standard and Selenium
+
+    ```c#
+    public Size ScreenSize
+    {
+        get
+        {
+            var js = "return [window.screen.availWidth, window.screen.availHeight];";
+            var jse = (IJavaScriptExecutor)Driver.Current;
+
+            dynamic dimensions = jse.ExecuteScript(js, null);
+            var x = Convert.ToInt32(dimensions[0]);
+            var y = Convert.ToInt32(dimensions[1]);
+
+            return new Size(x, y);
+        }
+    }
+    ```
+
+4. Create a `Maximize()` method that uses the ScreenSize
+
+    ```c#
+    public void Maximize()
+    {
+        Driver.Current.Manage().Window.Position = new Point(0, 0);
+        Driver.Current.Manage().Window.Size = ScreenSize;
+    }
+    ```
+
+5. Add the Window class to our Driver
+
+    ```c#
+    [ThreadStatic]
+    public static Window Window;
+
+    public static void Init()
+    {
+        _driver = DriverFactory.Build(FW.Config.Driver.Browser);
+        Wait = new Wait(FW.Config.Driver.WaitSeconds);
+        Window = new Window();
+        Window.Maximize();
+    }
+    ```
+
+6. Run a test. It should spin up a browser and then maximize!

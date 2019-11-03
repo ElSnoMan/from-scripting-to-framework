@@ -6,33 +6,12 @@ using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Royale.Pages;
+using Tests.Base;
 
 namespace Tests
 {
-    public class CopyDeckTests
+    public class CopyDeckTests : TestBase
     {
-        [OneTimeSetUp]
-        public void BeforeAll()
-        {
-            FW.SetConfig();
-            FW.CreateTestResultsDirectory();
-        }
-
-        [SetUp]
-        public void BeforeEach()
-        {
-            FW.SetLogger();
-            Driver.Init();
-            Pages.Init();
-            Driver.Goto(FW.Config.Test.Url);
-        }
-
-        [TearDown]
-        public void AfterEach()
-        {
-            Driver.Quit();
-        }
-
         [Test, Category("copydeck")]
         public void User_can_copy_the_deck()
         {

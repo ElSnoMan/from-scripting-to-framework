@@ -698,3 +698,170 @@ They look identical, but there is a big difference. The string we get back from 
 - The challenge is to solve this error
 
 > NOTE: There are many ways to approach this, but remember that this is String Comparison
+
+
+## Chapter 8 - Logging
+
+1. Create a `FW.cs` in the Framework project
+- This is going to hold objects that are used throughout our Framework and projects
+- We'll start with the the workspace directory and test results directory
+
+    ```c#
+    public static string WORKSPACE_DIRECTORY = Path.GetFullPath(@"../../../../");
+
+    public static DirectoryInfo CreateTestResultsDirectory()
+    {
+        var testDirectory = WORKSPACE_DIRECTORY + "TestResults";
+
+        if (Directory.Exists(testDirectory))
+        {
+            Directory.Delete(testDirectory, recursive: true);
+        }
+
+        return Directory.CreateDirectory(testDirectory);
+    }
+    ```
+
+2. Create a `Logging` directory with the `Framework` project and create a file called `Logger.cs`
+
+3. The Logger class will handle the `log.txt` and writing to them
+
+    ```c#
+    public class Logger
+    {
+        private readonly string _filepath;
+
+        public Logger(string testName, string filepath)
+        {
+            _filepath = filepath;
+
+            using (var log = File.CreateText(_filepath))
+            {
+                log.WriteLine($"Starting timestamp: {DateTime.Now.ToLocalTime()}");
+                log.WriteLine($"Test: {testName}");
+            }
+        }
+
+        public void Info(string message)
+        {
+            WriteLine($"[INFO]: {message}");
+        }
+
+        public void Step(string message)
+        {
+            WriteLine($"    [STEP]: {message}");
+        }
+
+        public void Warning(string message)
+        {
+            WriteLine($"[WARNING]: {message}");
+        }
+
+        public void Error(string message)
+        {
+            WriteLine($"[ERROR]: {message}");
+        }
+
+        public void Fatal(string message)
+        {
+            WriteLine($"[FATAL]: {message}");
+        }
+
+        private void WriteLine(string text)
+        {
+            using (var log = File.AppendText(_filepath))
+            {
+                log.WriteLine(text);
+            }
+        }
+
+        private void Write(string text)
+        {
+            using (var log = File.AppendText(_filepath))
+            {
+                log.Write(text);
+            }
+        }
+    }
+    ```
+
+    - `WriteLine()` and `Write()` will make writing to the correct log.txt file a piece of cake
+    - Different "log types" are used depending on the type of message we want to display
+        - Info
+        - Step
+        - Warning
+        - Error
+        - Fatal
+    - Whenever we make a new instance of Logger(), it will create a new log file using the `testName` and `filepath` that are passed.
+
+4. Our `Framework` project needs to use NUnit, so we will use PackSharp
+- Open Command Palette > `PackSharp: Add Package` > select `Framework` > search "NUnit" > select `NUnit`
+- Open Command Palette > `PackSharp: Remove Package` > select `Royale.Tests` > select `NUnit`
+- Build solution to make sure things are still structured ok:
+
+    ```bash
+    $ dotnet clean
+    $ dotnet restore
+    $ dotnet build
+    ```
+
+5. Add a `SetLogger()` method to our `FW` class to create the Logger per test. We'll also need some fields and properties to hold these values. We will also use a `lock` to solve any "race conditions":
+
+    ```c#
+    public static Logger Log => _logger ?? throw new NullReferenceException("_logger is null. SetLogger() first.");
+
+    [ThreadStatic]
+    public static DirectoryInfo CurrentTestDirectory;
+
+    [ThreadStatic]
+    private static Logger _logger;
+
+    public static void SetLogger()
+    {
+        lock (_setLoggerLock)
+        {
+            var testResultsDir = WORKSPACE_DIRECTORY + "TestResults";
+            var testName = TestContext.CurrentContext.Test.Name;
+            var fullPath = $"{testResultsDir}/{testName}";
+
+            if (Directory.Exists(fullPath))
+            {
+                CurrentTestDirectory = Directory.CreateDirectory(fullPath + TestContext.CurrentContext.Test.ID);
+            }
+            else
+            {
+                CurrentTestDirectory = Directory.CreateDirectory(fullPath);
+            }
+
+            _logger = new Logger(testName, CurrentTestDirectory.FullName + "/log.txt");
+        }
+    }
+
+    private static object _setLoggerLock = new object();
+    ```
+
+6. In the Test Suites, `CopyDeckTests` and `CardTests`, add a `[OneTimeSetup]` method and update the `[SetUp]` method:
+
+    ```c#
+    [OneTimeSetUp]
+    public void BeforeAll()
+    {
+        FW.CreateTestResultsDirectory();
+    }
+
+    [SetUp]
+    public void BeforeEach()
+    {
+        FW.SetLogger();
+        Driver.Init();
+        Pages.Init();
+        Driver.Goto("https://statsroyale.com");
+    }
+    ```
+
+    - `[OneTimeSetUp]` is run before any tests. This will create the `TestResults` directory for the test run.
+    - `FW.SetLogger()` will create an instance of Logger, which creates a log.txt file, for each test.
+
+7. Run the tests
+
+8. Open the new `TestResults` directory. You will see that there are directories created for each test and each test has its own `log.txt` file!

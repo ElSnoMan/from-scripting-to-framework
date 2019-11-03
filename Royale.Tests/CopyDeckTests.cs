@@ -1,5 +1,6 @@
 using System;
 using System.Text.RegularExpressions;
+using Framework;
 using Framework.Selenium;
 using NUnit.Framework;
 using OpenQA.Selenium;
@@ -10,9 +11,16 @@ namespace Tests
 {
     public class CopyDeckTests
     {
+        [OneTimeSetUp]
+        public void BeforeAll()
+        {
+            FW.CreateTestResultsDirectory();
+        }
+
         [SetUp]
         public void BeforeEach()
         {
+            FW.SetLogger();
             Driver.Init();
             Pages.Init();
             Driver.Goto("https://statsroyale.com");

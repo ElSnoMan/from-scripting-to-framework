@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Framework;
 using Framework.Models;
 using Framework.Selenium;
 using Framework.Services;
@@ -13,9 +14,16 @@ namespace Tests
 {
     public class CardTests
     {
+        [OneTimeSetUp]
+        public void BeforeAll()
+        {
+            FW.CreateTestResultsDirectory();
+        }
+
         [SetUp]
         public void BeforeEach()
         {
+            FW.SetLogger();
             Driver.Init();
             Pages.Init();
             Driver.Goto("https://statsroyale.com");

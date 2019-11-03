@@ -17,6 +17,7 @@ namespace Framework.Selenium
 
         public static void Init()
         {
+            FW.Log.Info("Browser: Chrome");
             _driver = new ChromeDriver(Path.GetFullPath(@"../../../../" + "_drivers"));
             Wait = new Wait(10);
         }
@@ -32,7 +33,7 @@ namespace Framework.Selenium
                 url = $"http://{url}";
             }
 
-            Debug.WriteLine(url);
+            FW.Log.Info(url);
             Current.Navigate().GoToUrl(url);
         }
 
@@ -48,6 +49,7 @@ namespace Framework.Selenium
 
         public static void Quit()
         {
+            FW.Log.Info("Close Browser");
             Current.Quit();
         }
     }

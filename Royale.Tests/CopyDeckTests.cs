@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using Framework.Selenium;
 using NUnit.Framework;
 using OpenQA.Selenium;
@@ -38,7 +39,12 @@ namespace Tests
             Pages.DeckBuilder.Goto().AddCardsManually();
             Pages.DeckBuilder.CopySuggestedDeck();
             Pages.CopyDeck.No().OpenAppStore();
-            Assert.That(Driver.Title, Is.EqualTo("Clash Royale on the App Store"));
+
+            // A solution to Challenge 7b
+            // Remove the Unicode character `\u0200e` by "replacing" it with empty
+            var title = Regex.Replace(Driver.Title, @"\u0200e", string.Empty);
+
+            Assert.That(title, Is.EqualTo("‎Clash Royale on the App Store"));
         }
 
         [Test, Category("copydeck")]

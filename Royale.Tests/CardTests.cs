@@ -9,33 +9,12 @@ using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using Royale.Pages;
+using Tests.Base;
 
 namespace Tests
 {
-    public class CardTests
+    public class CardTests : TestBase
     {
-        [OneTimeSetUp]
-        public void BeforeAll()
-        {
-            FW.SetConfig();
-            FW.CreateTestResultsDirectory();
-        }
-
-        [SetUp]
-        public void BeforeEach()
-        {
-            FW.SetLogger();
-            Driver.Init();
-            Pages.Init();
-            Driver.Goto(FW.Config.Test.Url);
-        }
-
-        [TearDown]
-        public void AfterEach()
-        {
-            Driver.Quit();
-        }
-
         static IList<Card> apiCards = new ApiCardService().GetAllCards();
 
         [Test, Category("cards")]

@@ -12,12 +12,18 @@ namespace Framework.Selenium
         [ThreadStatic]
         private static IWebDriver _driver;
 
+        [ThreadStatic]
+        public static Wait Wait;
+
         public static void Init()
         {
             _driver = new ChromeDriver(Path.GetFullPath(@"../../../../" + "_drivers"));
+            Wait = new Wait(10);
         }
 
         public static IWebDriver Current => _driver ?? throw new NullReferenceException("_driver is null.");
+
+        public static string Title => Current.Title;
 
         public static void Goto(string url)
         {

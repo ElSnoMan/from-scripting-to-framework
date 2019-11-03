@@ -388,3 +388,313 @@ The challenge is to solve this error.
 > HINT: Be aware that some cards have an Arena of `0` because they are playable in the "Training Camp". This is why we need to understand the data we're working with. Otherwise, you wouldn't be testing for those values! Check out the `Baby Dragon` card.
 
 Since the recording, they have slightly changed the way their pages load. Because of this, you may experience "flakiness" because we are lacking any waits. We will be discussing waits in Chapter 7 and 12.
+
+
+## Chapter 7 - New Test Suite
+
+#### 7a
+
+1. Make a new suite of tests by creating a new test file called `CopyDeckTests.cs`
+
+2. Within this file, we'll copy and paste our SetUp and TearDown from the `CardTests.cs`
+
+3. Then we can write a new test that checks whether a user can copy a deck
+
+    ```c#
+    [Test]
+    public void User_can_copy_the_deck()
+    {
+        // 2. go to Deck Builder page
+        Driver.FindElement(By.CssSelector("[href='/deckbuilder']")).Click();
+        // 3. Click "add cards manually"
+        Driver.FindElement(By.XPath("//a[text()='add cards manually']")).Click();
+        // 4. Click Copy Deck icon
+        Driver.FindElement(By.CssSelector(".copyButton")).Click();
+        // 5. Click Yes
+        Driver.FindElement(By.Id("button-open")).Click();
+        // 6. Assert the "if click Yes..." message is displayed
+        var copyMessage = Driver.FindElement(By.CssSelector(".notes.active"));
+        Assert.That(copyMessage.Displayed);
+    }
+    ```
+
+4. With the test written, we can now refactor this into our Page Map Pattern.
+    - Create a `DeckBuilderPage.cs` file within `Royale.Pages`
+    - Create the Page Map
+    ```c#
+    public class DeckBuilderPageMap
+    {
+        public IWebElement AddCardsManuallyLink => Driver.FindElement(By.CssSelector(""));
+
+        public IWebElement CopyDeckIcon => Driver.FindElement(By.XPath("//a[text()='add cards manually']"));
+    }
+    ```
+
+    - Then create the Page
+    ```c#
+    public class DeckBuilderPage : PageBase
+    {
+        public readonly DeckBuilderPageMap Map;
+
+        public DeckBuilderPage()
+        {
+            Map = new DeckBuilderPageMap();
+        }
+
+        public DeckBuilderPage Goto()
+        {
+            HeaderNav.Map.DeckBuilderLink.Click();
+            return this;
+        }
+
+        public void AddCardsManually()
+        {
+            Map.AddCardsManuallyLink.Click();
+        }
+
+        public void CopySuggestedDeck()
+        {
+            Map.CopyDeckIcon.Click();
+        }
+    }
+    ```
+
+5. Create the `CopyDeckPage.cs` file
+
+6. Add these pages to the Pages Wrapper class in `Pages.cs`. Your Pages class should now look like this
+
+    ```c#
+    public class Pages
+    {
+        [ThreadStatic]
+        public static CardsPage Cards;
+
+        [ThreadStatic]
+        public static CardDetailsPage CardDetails;
+
+        [ThreadStatic]
+        public static DeckBuilderPage DeckBuilder;
+
+        [ThreadStatic]
+        public static CopyDeckPage CopyDeck;
+
+        public static void Init()
+        {
+            Cards = new CardsPage();
+            CardDetails = new CardDetailsPage();
+            DeckBuilder = new DeckBuilderPage();
+            CopyDeck = new CopyDeckPage();
+        }
+    }
+    ```
+
+7. Use these pages in the test
+
+    ```c#
+    [Test]
+    public void User_can_copy_the_deck()
+    {
+        Pages.DeckBuilder.Goto();
+        Pages.DeckBuilder.AddCardsManually();
+        Pages.DeckBuilder.CopySuggestedDeck();
+
+        Pages.CopyDeck.Yes();
+
+        Assert.That(Pages.CopyDeck.Map.CopiedMessage.Displayed);
+    }
+    ```
+
+8. If you run the test, it fails pretty quickly! That's because the test in the code is running faster than the page is moving. We need to use `WebDriverWait`. Add this to the top of our test.
+    ```c#
+    var wait = new WebDriverWait(Driver.Current, TimeSpan.FromSeconds(10));
+    ```
+
+9. After `Pages.DeckBuilder.AddCardsManually` add
+    ```c#
+    wait.Until(drvr => Pages.DeckBuilder.Map.CopyDeckIcon.Displayed);
+    ```
+
+10. Add another wait after `Pages.CopyDeck.Yes`
+    ```c#
+    wait.Until(drvr => Pages.CopyDeck.Map.CopiedMessage.Displayed);
+    ```
+
+11. Just like how we created our own Driver class to "extend" WebDriver, we will do the same for WebDriverWait.
+    - Create a `Wait.cs` file in `Framework.Selenium`
+    ```c#
+    public class Wait
+    {
+        private readonly WebDriverWait _wait;
+
+        public Wait(int waitSeconds)
+        {
+            _wait = new WebDriverWait(Driver.Current, TimeSpan.FromSeconds(waitSeconds))
+            {
+                PollingInterval = TimeSpan.FromMilliseconds(500)
+            };
+
+            _wait.IgnoreExceptionTypes(
+                typeof(NoSuchElementException),
+                typeof(ElementNotVisibleException),
+                typeof(StaleElementReferenceException)
+            );
+        }
+
+        public bool Until(Func<IWebDriver, bool> condition)
+        {
+            return _wait.Until(condition);
+        }
+    }
+    ```
+
+12. Include our new Wait to the Driver class
+
+    ```c#
+    [ThreadStatic]
+    private static IWebDriver _driver;
+
+    [ThreadStatic]
+    public static Wait Wait;
+
+    public static void Init()
+    {
+        _driver = new ChromeDriver(Path.GetFullPath(@"../../../../" + "_drivers"));
+        Wait = new Wait(10);
+    }
+    ```
+
+13. In our test, replace `wait.Until()` with our new Wait. For example:
+    ```c#
+    Driver.Wait.Until(drvr => Pages.DeckBuilder.Map.CopyDeckIcon.Displayed);
+    ```
+
+14. CHALLENGE 7a: On the `DeckBuilderPage`, the Page Map has two elements that may have incorrect locators. You probably didn't spot this!
+
+Part 1 of the challenge is to validate that they work in the DevTools Console and fix them if needed.
+
+Also, you may need to add another wait for the `AddCardsManually()` step.
+
+Part 2 of the challenge is to add this missing wait to the test.
+
+
+#### 7b
+
+1. Refactor the Waits from our `User_can_copy_deck()` test into their respective actions. For example, the `AddCardsManually()` method should now look like:
+
+    ```c#
+    public void AddCardsManually()
+    {
+        Map.AddCardsManuallyLink.Click();
+        Driver.Wait.Until(drvr => Map.CopyDeckIcon.Displayed);
+    }
+    ```
+
+2. Write the next two tests with how we want them to eventuall look like. This is kind of a TDD approach:
+
+    ```C#
+    [Test]
+    public void User_opens_app_store()
+    {
+        Pages.DeckBuilder.Goto().AddCardsManually();
+        Pages.DeckBuilder.CopySuggestedDeck();
+        Pages.CopyDeck.No().OpenAppStore();
+        Assert.That(Driver.Title, Is.EqualTo("Clash Royale on the App Store"));
+    }
+    [Test]
+    public void User_opens_google_play()
+    {
+        Pages.DeckBuilder.Goto().AddCardsManually();
+        Pages.DeckBuilder.CopySuggestedDeck();
+        Pages.CopyDeck.No().OpenGooglePlay();
+        Assert.AreEqual("Clash Royale - Apps on Google Play", Driver.Title);
+    }
+    ```
+
+    - Change the return type of our `DeckBuilder.Goto()` method so we can "chain" `AddCardsManually()`
+    - From `void` to `DeckBuilderPage` and adding `return this;`
+
+    ```c#
+    public DeckBuilder Goto()
+    {
+        HeaderNav.Map.DeckBuilderLink.Click();
+        Driver.Wait.Until(drvr => Map.AddCardsManuallyLink.Displayed);
+        return this;
+    }
+    ```
+
+3. You will have some errors like a red squiggly under `No()` because we haven't implemented it yet. Let's do that! In the `CopyDeckPage`, add a No() method:
+
+    ```c#
+    public CopyDeckPage No()
+    {
+        Map.NoButton.Click();
+        return this;
+    }
+    ```
+
+    - `return this;` returns the current instance of itself - the CopyDeckPage
+    - Notice how the return type is a `CopyDeckPage`
+    - This allows us to "chain" commands and actions like we did in Step 2!
+
+4. Add the `OpenAppStore()` and `OpenGooglePlay()` methods as well
+
+    ```c#
+    public void OpenAppStore()
+    {
+        Map.AppStoreButton.Click();
+    }
+
+    public void OpenGooglePlay()
+    {
+        Map.GooglePlayButton.Click();
+    }
+    ```
+
+    - Find the elements and add them to the `CopyDeckPageMap` so you can access them in the above methods
+
+5. Fix the last error which is `Driver.Title` in the test. Like the error suggests, our `Driver` class doesn't have a `Title` property. Let's add it!
+
+    ```c#
+    public static string Title => Current.Title;
+    ```
+
+6. The Accept Cookies banner at the bottom of the Copy Deck page will overlap our App Store buttons. We need to accept this to remove the banner. Add this method:
+
+    ```c#
+    public void AcceptCookies()
+    {
+        Map.AcceptCookiesButton.Click();
+        Driver.Wait.Until(drvr => !Map.AcceptCookiesButton.Displayed);
+    }
+    ```
+
+    - Find the element and add it to the Map
+    - The `AcceptCookies()` method will click the button and then wait for it to disappear (aka NOT BE displayed)
+
+7. Add the AcceptCookies() to our No()
+
+    ```c#
+    public CopyDeckPage No()
+    {
+        Map.NoButton.Click();
+        AcceptCookies();
+        Driver.Wait.Until(drvr => Map.OtherStoresButton.Displayed);
+        return this;
+    }
+    ```
+
+    - We also added a Wait to make sure the `OtherStoresButton` is displayed first before proceeding
+
+8. CHALLENGE 7b: At the end of the video, I show you that our `User_opens_app_store()` fails because of a string comparison issue:
+
+`"Clash Royale on the App Store"`
+
+is not equal to
+
+`"Clash Royale on the App Store"`
+
+They look identical, but there is a big difference. The string we get back from `Driver.Title` has a *unicode* character at the beginning!
+
+- The challenge is to solve this error
+
+> NOTE: There are many ways to approach this, but remember that this is String Comparison

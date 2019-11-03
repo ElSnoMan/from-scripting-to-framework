@@ -575,3 +575,126 @@ Part 1 of the challenge is to validate that they work in the DevTools Console an
 Also, you may need to add another wait for the `AddCardsManually()` step.
 
 Part 2 of the challenge is to add this missing wait to the test.
+
+
+#### 7b
+
+1. Refactor the Waits from our `User_can_copy_deck()` test into their respective actions. For example, the `AddCardsManually()` method should now look like:
+
+    ```c#
+    public void AddCardsManually()
+    {
+        Map.AddCardsManuallyLink.Click();
+        Driver.Wait.Until(drvr => Map.CopyDeckIcon.Displayed);
+    }
+    ```
+
+2. Write the next two tests with how we want them to eventuall look like. This is kind of a TDD approach:
+
+    ```C#
+    [Test]
+    public void User_opens_app_store()
+    {
+        Pages.DeckBuilder.Goto().AddCardsManually();
+        Pages.DeckBuilder.CopySuggestedDeck();
+        Pages.CopyDeck.No().OpenAppStore();
+        Assert.That(Driver.Title, Is.EqualTo("Clash Royale on the App Store"));
+    }
+    [Test]
+    public void User_opens_google_play()
+    {
+        Pages.DeckBuilder.Goto().AddCardsManually();
+        Pages.DeckBuilder.CopySuggestedDeck();
+        Pages.CopyDeck.No().OpenGooglePlay();
+        Assert.AreEqual("Clash Royale - Apps on Google Play", Driver.Title);
+    }
+    ```
+
+    - Change the return type of our `DeckBuilder.Goto()` method so we can "chain" `AddCardsManually()`
+    - From `void` to `DeckBuilderPage` and adding `return this;`
+
+    ```c#
+    public DeckBuilder Goto()
+    {
+        HeaderNav.Map.DeckBuilderLink.Click();
+        Driver.Wait.Until(drvr => Map.AddCardsManuallyLink.Displayed);
+        return this;
+    }
+    ```
+
+3. You will have some errors like a red squiggly under `No()` because we haven't implemented it yet. Let's do that! In the `CopyDeckPage`, add a No() method:
+
+    ```c#
+    public CopyDeckPage No()
+    {
+        Map.NoButton.Click();
+        return this;
+    }
+    ```
+
+    - `return this;` returns the current instance of itself - the CopyDeckPage
+    - Notice how the return type is a `CopyDeckPage`
+    - This allows us to "chain" commands and actions like we did in Step 2!
+
+4. Add the `OpenAppStore()` and `OpenGooglePlay()` methods as well
+
+    ```c#
+    public void OpenAppStore()
+    {
+        Map.AppStoreButton.Click();
+    }
+
+    public void OpenGooglePlay()
+    {
+        Map.GooglePlayButton.Click();
+    }
+    ```
+
+    - Find the elements and add them to the `CopyDeckPageMap` so you can access them in the above methods
+
+5. Fix the last error which is `Driver.Title` in the test. Like the error suggests, our `Driver` class doesn't have a `Title` property. Let's add it!
+
+    ```c#
+    public static string Title => Current.Title;
+    ```
+
+6. The Accept Cookies banner at the bottom of the Copy Deck page will overlap our App Store buttons. We need to accept this to remove the banner. Add this method:
+
+    ```c#
+    public void AcceptCookies()
+    {
+        Map.AcceptCookiesButton.Click();
+        Driver.Wait.Until(drvr => !Map.AcceptCookiesButton.Displayed);
+    }
+    ```
+
+    - Find the element and add it to the Map
+    - The `AcceptCookies()` method will click the button and then wait for it to disappear (aka NOT BE displayed)
+
+7. Add the AcceptCookies() to our No()
+
+    ```c#
+    public CopyDeckPage No()
+    {
+        Map.NoButton.Click();
+        AcceptCookies();
+        Driver.Wait.Until(drvr => Map.OtherStoresButton.Displayed);
+        return this;
+    }
+    ```
+
+    - We also added a Wait to make sure the `OtherStoresButton` is displayed first before proceeding
+
+8. CHALLENGE 7b: At the end of the video, I show you that our `User_opens_app_store()` fails because of a string comparison issue:
+
+`"Clash Royale on the App Store"`
+
+is not equal to
+
+`"Clash Royale on the App Store"`
+
+They look identical, but there is a big difference. The string we get back from `Driver.Title` has a *unicode* character at the beginning!
+
+- The challenge is to solve this error
+
+> NOTE: There are many ways to approach this, but remember that this is String Comparison

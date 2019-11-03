@@ -23,20 +23,31 @@ namespace Tests
             Driver.Quit();
         }
 
-        [Test]
+        [Test, Category("copydeck")]
         public void User_can_copy_the_deck()
         {
-            Pages.DeckBuilder.Goto();
-            Driver.Wait.Until(drvr => Pages.DeckBuilder.Map.AddCardsManuallyLink.Displayed);
-            Pages.DeckBuilder.AddCardsManually();
-            Driver.Wait.Until(drvr => Pages.DeckBuilder.Map.CopyDeckIcon.Displayed);
-
+            Pages.DeckBuilder.Goto().AddCardsManually();
             Pages.DeckBuilder.CopySuggestedDeck();
-
             Pages.CopyDeck.Yes();
-            Driver.Wait.Until(drvr => Pages.CopyDeck.Map.CopiedMessage.Displayed);
-
             Assert.That(Pages.CopyDeck.Map.CopiedMessage.Displayed);
+        }
+
+        [Test, Category("copydeck")]
+        public void User_opens_app_store()
+        {
+            Pages.DeckBuilder.Goto().AddCardsManually();
+            Pages.DeckBuilder.CopySuggestedDeck();
+            Pages.CopyDeck.No().OpenAppStore();
+            Assert.That(Driver.Title, Is.EqualTo("Clash Royale on the App Store"));
+        }
+
+        [Test, Category("copydeck")]
+        public void User_opens_google_play()
+        {
+            Pages.DeckBuilder.Goto().AddCardsManually();
+            Pages.DeckBuilder.CopySuggestedDeck();
+            Pages.CopyDeck.No().OpenGooglePlay();
+            Assert.AreEqual("Clash Royale - Apps on Google Play", Driver.Title);
         }
     }
 }

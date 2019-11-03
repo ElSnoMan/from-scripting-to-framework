@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Drawing;
 using OpenQA.Selenium;
+using OpenQA.Selenium.Interactions;
 
 namespace Framework.Selenium
 {
@@ -68,6 +69,12 @@ namespace Framework.Selenium
         public string GetProperty(string propertyName)
         {
             return Current.GetProperty(propertyName);
+        }
+
+        public void Hover()
+        {
+            var actions = new Actions(Driver.Current);
+            actions.MoveToElement(Current).Perform();
         }
 
         public void SendKeys(string text)

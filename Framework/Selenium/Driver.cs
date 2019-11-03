@@ -15,9 +15,8 @@ namespace Framework.Selenium
 
         public static void Init()
         {
-            FW.Log.Info("Browser: Chrome");
-            _driver = new ChromeDriver(Path.GetFullPath(@"../../../../" + "_drivers"));
-            Wait = new Wait(10);
+            _driver = DriverFactory.Build(FW.Config.Driver.Browser);
+            Wait = new Wait(FW.Config.Driver.WaitSeconds);
         }
 
         public static IWebDriver Current => _driver ?? throw new NullReferenceException("_driver is null.");

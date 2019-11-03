@@ -1017,3 +1017,179 @@ They look identical, but there is a big difference. The string we get back from 
 - The challenge is to add a `Hover()` method so that each element simply call .Hover()
 
 > HINT: The Actions class is in `OpenQA.Selenium.Interactions`
+
+
+## Chapter 10 - Configuration
+
+1. Create `DriverFactory.cs` under `Framework.Selenium`
+
+    ```c#
+    public static class DriverFactory
+    {
+        public static IWebDriver Build(string browserName)
+        {
+            FW.Log.Info($"Browser: {browserName}");
+
+            switch (browserName)
+            {
+                case "chrome":
+                    return new ChromeDriver(FW.WORKSPACE_DIRECTORY + "_drives");
+
+                case "firefox":
+                    return new FirefoxDriver();
+
+                default:
+                    throw new System.ArgumentException($"{browserName} not supported.");
+            }
+        }
+    }
+    ```
+
+    - This handles creating our ChromeDriver, but also allows you to define how you want your different drivers to be created
+
+2. Use this is our Driver
+
+    ```c#
+    public static void Init(string browserName)
+    {
+        _driver = DriverFactory.Build(browserName);
+        Wait = new Wait(10);
+    }
+    ```
+
+3. Update our `[SetUp]` methods since we now require a browserName in `Driver.Init()`
+
+    ```c#
+    [SetUp]
+    public void BeforeEach()
+    {
+        FW.SetLogger();
+        Driver.Init("chrome");
+        Pages.Init();
+        Driver.Goto("https://statsroyale.com");
+    }
+    ```
+
+4. Create a `framework-config.json` at the workspace root
+
+    ```javascript
+    {
+        "driver": {
+            "browser": "chrome"
+        },
+
+        "test": {
+            "url": "staging.statsroyale.com"
+        }
+    }
+    ```
+
+5. Create `FwConfig.cs` under `Framework` to represent the json in code:
+
+    ```c#
+    public class FwConfig
+    {
+        public DriverSettings Driver { get; set; }
+
+        public TestSettings Test { get; set; }
+    }
+
+    public class DriverSettings
+    {
+        public string Browser { get; set; }
+    }
+
+    public class TestSettings
+    {
+        public string Url { get; set; }
+    }
+    ```
+
+    - `DriverSettings` represents the "driver" object in the json
+    - `TestSettings` represents the "test" object in the json
+    - `FwConfig` represents the entire config file
+
+6. Add a "singleton" representation of our config in the `FW` class
+
+    ```c#
+    public static FwConfig Config => _configuration ?? throw new NullReferenceException("Config is null. Call FW.SeConfig() first.");
+
+    private static FwConfig _configuration;
+    ```
+
+7. Now add the `SetConfig()` method
+
+    ```c#
+    public static void SetConfig()
+    {
+        if (_configuration == null)
+        {
+            var jsonStr = File.ReadAllText(WORKSPACE_DIRECTORY + "/framework-config.json");
+            _configuration = JsonConvert.DeserializeObject<FwConfig>(jsonStr);
+        }
+    }
+    ```
+
+    - We check if the _configuration is null
+        - if null, then set it
+        - if not null, then it has already been set
+    - We are getting the .json file and turning it into a json string
+    - Then we deserialize it into the shape of our `FwConfig` so it can be used in code
+
+8. Go back to our Driver class and use the config
+
+    ```c#
+    public static void Init()
+    {
+        _driver = DriverFactory.Build(FW.Config.Driver.Browser);
+        Wait = new Wait(10);
+    }
+    ```
+
+9. Update our test files to use the config too
+
+    ```c#
+    [OneTimeSetUp]
+    public void BeforeAll()
+    {
+        FW.SetConfig();
+        FW.CreateTestResultsDirectory();
+    }
+
+    [SetUp]
+    public void BeforeEach()
+    {
+        FW.SetLogger();
+        Driver.Init();
+        Pages.Init();
+        Driver.Goto(FW.Config.Test.Url);
+    }
+    ```
+
+    - `FW.SetConfig();` in the [OneTimeSetUp]
+    - `Driver.Goto(FW.Config.Test.Url);` in the [SetUp]
+
+10. Run the `copydeck` tests
+
+11. They failed! Take a look at the log files to see what happened
+
+    - Our test logged this: `[INFO]: http://staging.statsroyale.com`
+    - It tried navigating to a "staging" version of the site, but we don't have access
+
+12. Update the `test.url` value in our `framework-config.json`
+
+    ```javascript
+    {
+        "driver": {
+            "browser": "chrome"
+        },
+
+        "test": {
+            "url": "statsroyale.com"
+        }
+    }
+    ```
+
+13. CHALLENGE: I bet you already have some ideas for things we could put into our framework-config.json. For this challenge, add a "wait" property to hold the default number of seconds that we want to use when instantiating our Wait class.
+
+> HINT: We're instantiating Wait in Driver.Init()

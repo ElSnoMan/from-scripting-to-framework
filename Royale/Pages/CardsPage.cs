@@ -18,9 +18,8 @@ namespace Royale.Pages
             return this;
         }
 
-        public IWebElement GetCardByName(string cardName)
+        public Element GetCardByName(string cardName)
         {
-            // Given the cardName "Ice Spirit" => should turn into "Ice+Spirit" to work with our locator.
             if (cardName.Contains(" "))
             {
                 cardName = cardName.Replace(" ", "+");
@@ -32,6 +31,6 @@ namespace Royale.Pages
 
     public class CardsPageMap
     {
-        public IWebElement Card(string name) => Driver.FindElement(By.CssSelector($"a[href*='{name}']"));
+        public Element Card(string name) => Driver.FindElement(By.CssSelector($"a[href*='{name}']"), $"Card: {name}");
     }
 }

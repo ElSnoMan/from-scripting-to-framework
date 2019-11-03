@@ -865,3 +865,155 @@ They look identical, but there is a big difference. The string we get back from 
 7. Run the tests
 
 8. Open the new `TestResults` directory. You will see that there are directories created for each test and each test has its own `log.txt` file!
+
+
+## Chapter 9 - Element and Elements
+
+1. Create an `Element.cs` under `Framework.Selenium`
+
+    ```c#
+    public class Element : IWebElement
+    {
+        private readonly IWebElement _element;
+
+        public readonly string Name;
+
+        public By FoundBy { get; set; }
+
+        public Element(IWebElement element, string name)
+        {
+            _element = element;
+            Name = name;
+        }
+
+        public IWebElement Current => _element ?? throw new System.NullReferenceException("_element is null.");
+
+        public string TagName => Current.TagName;
+
+        public string Text => Current.Text;
+
+        public bool Enabled => Current.Enabled;
+
+        public bool Selected => Current.Selected;
+
+        public Point Location => Current.Location;
+
+        public Size Size => Current.Size;
+
+        public bool Displayed => Current.Displayed;
+
+        public void Clear()
+        {
+            Current.Clear();
+        }
+
+        public void Click()
+        {
+            FW.Log.Step($"Click {Name}");
+            Current.Click();
+        }
+
+        public IWebElement FindElement(By by)
+        {
+            return Current.FindElement(by);
+        }
+
+        public ReadOnlyCollection<IWebElement> FindElements(By by)
+        {
+            return Current.FindElements(by);
+        }
+
+        public string GetAttribute(string attributeName)
+        {
+            return Current.GetAttribute(attributeName);
+        }
+
+        public string GetCssValue(string propertyName)
+        {
+            return Current.GetCssValue(propertyName);
+        }
+
+        public string GetProperty(string propertyName)
+        {
+            return Current.GetProperty(propertyName);
+        }
+
+        public void SendKeys(string text)
+        {
+            Current.SendKeys(text);
+        }
+
+        public void Submit()
+        {
+            Current.Submit();
+        }
+    }
+    ```
+
+    - Our class `Element` will implement the `IWebElement` interface
+    - Just like our Driver, `Current` will represent the current instance of the IWebElement we're extending
+    - Add logging to our `Click()` method
+
+2. Our Driver should now return `Element` instead of `IWebElement`
+
+    ```c#
+    public static Element FindElement(By by, string elementName)
+    {
+        return new Element(Current.FindElement(by), elementName)
+        {
+            FoundBy = by
+        };
+    }
+    ```
+
+3. Go to each of our Pages and change our Maps to use `Element` instead of `IWebElement` and give each element a name. For example, in `HeaderNav.cs`:
+
+    ```c#
+    public class HeaderNavMap
+    {
+        public Element CardsTabLink => Driver.FindElement(By.CssSelector("a[href='/cards']"), "Cards Link");
+
+        public Element DeckBuilderLink => Driver.FindElement(By.CssSelector("a[href='/deckbuilder']"), "Deck Builder Link");
+    }
+    ```
+
+    > NOTE: The `elementName` we pass in, like "Cards Link", is used for logging purposes
+
+4. Now create `Elements.cs` under `Framework.Selenium`
+
+    ```c#
+    public class Elements : ReadOnlyCollection<IWebElement>
+    {
+        private readonly IList<IWebElement> _elements;
+
+        public Elements(IList<IWebElement> list) : base(list)
+        {
+            _elements = list;
+        }
+
+        public By FoundBy { get; set; }
+
+        public bool IsEmpty => Count == 0;
+    }
+    ```
+
+    - Our class already has access to things like `Count` because it's inheriting from `ReadOnlyCollection<IWebElement>`
+    - We already have the functionality of a list, but now we can add our own! `FoundBy` and `IsEmpty` are examples of this
+
+5. Our Driver should return `Elements` instead of `IList<IWebElement>`
+
+    ```c#
+    public static Elements FindElements(By by)
+    {
+        return new Elements(Current.FindElements(by))
+        {
+            FoundBy = by
+        };
+    }
+    ```
+
+6. CHALLENGE: Our Element class can now have any functionality we want! This is a very powerful way for you to control what you can and cannot do with your elements.
+
+- The challenge is to add a `Hover()` method so that each element simply call .Hover()
+
+> HINT: The Actions class is in `OpenQA.Selenium.Interactions`

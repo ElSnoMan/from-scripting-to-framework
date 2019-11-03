@@ -10,6 +10,8 @@ namespace Framework
     public class DriverSettings
     {
         public string Browser { get; set; }
+
+        public int WaitSeconds { get; set; }
     }
 
     public class TestSettings

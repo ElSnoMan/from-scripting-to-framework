@@ -16,7 +16,7 @@ namespace Framework.Selenium
         public static void Init()
         {
             _driver = DriverFactory.Build(FW.Config.Driver.Browser);
-            Wait = new Wait(10);
+            Wait = new Wait(FW.Config.Driver.WaitSeconds);
         }
 
         public static IWebDriver Current => _driver ?? throw new NullReferenceException("_driver is null.");

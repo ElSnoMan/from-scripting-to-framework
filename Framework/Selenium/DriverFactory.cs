@@ -13,7 +13,7 @@ namespace Framework.Selenium
             switch (browserName)
             {
                 case "chrome":
-                    return new ChromeDriver(FW.WORKSPACE_DIRECTORY + "_drives");
+                    return new ChromeDriver(FW.WORKSPACE_DIRECTORY + "_drivers");
 
                 case "firefox":
                     return new FirefoxDriver();

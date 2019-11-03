@@ -15,8 +15,7 @@ namespace Framework.Selenium
 
         public static void Init()
         {
-            FW.Log.Info("Browser: Chrome");
-            _driver = new ChromeDriver(Path.GetFullPath(@"../../../../" + "_drivers"));
+            _driver = DriverFactory.Build(FW.Config.Driver.Browser);
             Wait = new Wait(10);
         }
 

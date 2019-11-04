@@ -1,5 +1,6 @@
 using Framework.Selenium;
 using OpenQA.Selenium;
+using SeleniumExtras.WaitHelpers;
 
 namespace Royale.Pages
 {
@@ -23,14 +24,14 @@ namespace Royale.Pages
         {
             Map.NoButton.Click();
             AcceptCookies();
-            Driver.Wait.Until(drvr => Map.OtherStoresButton.Displayed);
+            Driver.Wait.Until(ExpectedConditions.ElementIsVisible(Map.OtherStoresButton.FoundBy));
             return this;
         }
 
         public void AcceptCookies()
         {
             Map.AcceptCookiesButton.Click();
-            Driver.Wait.Until(drvr => !Map.AcceptCookiesButton.Displayed);
+            Driver.Wait.Until(WaitConditions.ElementNotDisplayed(Map.AcceptCookiesButton));
         }
 
         public void OpenAppStore()

@@ -1374,3 +1374,161 @@ However, this may not work for Mac or Linux. Let's go over a method that works c
     ```
 
 6. Run a test. It should spin up a browser and then maximize!
+
+
+## Chapter 12 - Wait Conditions
+
+1. Install the `Selenium Extras` package with PackSharp
+
+    - Open Command Palette > `PackSharp: Add Package` > select `Framework` > search "Selenium Extras" > select `DotNetSeleniumExtras.WaitHelpers`
+
+2. Use ExpectedConditions in our No() method
+
+> NOTE: Make sure to use it from the `SeleniumExtras.WaitHelpers` and NOT from `OpenQA.Selenium.Support.UI`
+
+    ```c#
+    Driver.Wait.Until(ExpectedConditions.ElementIsVisible(Map.OtherStoresButton.FoundBy));
+    ```
+
+3. We need to solve the error by adding an overload of Until() in our Wait class
+
+    ```c#
+    public IWebElement Until(Func<IWebDriver, IWebElement> condition)
+    {
+        return _wait.Until(condition);
+    }
+    ```
+
+4. Our No() method should now look like this
+
+    ```c#
+    public CopyDeckPage No()
+    {
+        Map.NoButton.Click();
+        AcceptCookies();
+        Driver.Wait.Until(ExpectedConditions.ElementIsVisible(Map.OtherStoresButton.FoundBy));
+        return this;
+    }
+    ```
+
+5. Create `WaitConditions.cs` under `Framework.Selenium`
+
+    ```c#
+    public sealed class WaitConditions
+    {
+        public static Func<IWebDriver, bool> ElementDisplayed(IWebElement element)
+        {
+            bool condition(IWebDriver driver)
+            {
+                return element.Displayed;
+            }
+
+            return condition;
+        }
+    }
+    ```
+
+6. Use our WaitConditions in the DeckBuilderPage's `AddCardsManually()` method
+
+    ```c#
+    public void AddCardsManually()
+    {
+        Driver.Wait.Until(WaitConditions.ElementDisplayed(Map.AddCardsManuallyLink));
+        Map.AddCardsManuallyLink.Click();
+        Driver.Wait.Until(WaitConditions.ElementDisplayed(Map.CopyDeckIcon));
+    }
+    ```
+
+7. We also need to handle elements that need to disappear. Let's add it to our WaitConditions class
+
+    ```c#
+    public static Func<IWebDriver, bool> ElementNotDisplayed(IWebElement element)
+    {
+        bool condition(IWebDriver driver)
+        {
+            try
+            {
+                return !element.Displayed;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return true;
+            }
+        }
+
+        return condition;
+    }
+    ```
+
+8. Now we'll use this in our `AcceptCookies()` method in the CopyDeckPage
+
+    ```c#
+    public void AcceptCookies()
+    {
+        Map.AcceptCookiesButton.Click();
+        Driver.Wait.Until(WaitConditions.ElementNotDisplayed(Map.AcceptCookiesButton));
+    }
+    ```
+
+9. With our Waits, we can return more than just booleans. Let's create a WaitCondition that returns a list of Elements once at least one of them is found. Add this to our WaitConditions class:
+
+    ```c#
+    public static Func<IWebDriver, Elements> ElementsNotEmpty(Elements elements)
+    {
+        Elements condition(IWebDriver driver)
+        {
+            Elements _elements = Driver.FindElements(elements.FoundBy);
+            return _elements.IsEmpty ? null : _elements;
+        }
+
+        return condition;
+    }
+    ```
+
+10. Add another Wait that returns an element instead of just bool. This WaitCondition will solve us waiting for an element to be displayed on one line, and then clicking it in the next line.
+
+    ```c#
+    public static Func<IWebDriver, IWebElement> ElementIsDisplayed(IWebElement element)
+    {
+        IWebElement condition(IWebDriver driver)
+        {
+            try
+            {
+                return element.Displayed ? element : null;
+            }
+            catch (NoSuchElementException)
+            {
+                return null;
+            }
+            catch (ElementNotVisibleException)
+            {
+                return null;
+            }
+        }
+
+        return condition;
+    }
+    ```
+
+11. Now let's use it in the AddCardsManually() method
+
+    ```c#
+    public void AddCardsManually()
+    {
+        Driver.Wait.Until(
+            WaitConditions.ElementIsDisplayed(Map.AddCardsManuallyLink))
+            .Click();
+        Driver.Wait.Until(WaitConditions.ElementDisplayed(Map.CopyDeckIcon));
+    }
+    ```
+
+12. CHALLENGE: I didn't run the test just so we could do this challenge :)
+
+When working with web elements, we usually only work with elements that we expect to be present on the DOM. At least, that's what our users do. Because of this, it makes sense for us to "wait" for elements to at least be present in the DOM before returning it.
+
+In this challenge, you need to add a "Wait" to our `Driver.FindElement()` method so every time we "find" an element, we wait until it exists before returning it.
+
+> HINT: Give it a try, but you can look at the last commit to see how this is done.
+> HINT: Your tests will most likely fail on the `AddCardsManually()` step because when we call `Map.AddCardsManuallyButton`, we are having the Driver find the element at that time instead of within a Wait. Solving this challenge will also solve that issue.
+
+That's it! You are now done with the course :)

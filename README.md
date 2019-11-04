@@ -1,5 +1,38 @@
 # From Scripting to Framework course on TestAutomationU.com
 
+## HOW TO USE THIS REPO
+
+This repository is meant to help you as you are watching and learning through the course.
+
+By default, when you land on this page, the current branch will be `master` which will have all of the latest code. As you follow along, make sure to switch to the branch or commit that matches your current chapter.
+
+For example, if you want to see the code used for Chapter 5, but don't want to see the solutions to the challenge(s):
+
+1. Click `Commits`
+    - This should take you to something like https://github.com/ElSnoMan/from-scripting-to-framework/commits/master
+
+2. Click on the Commit you want to view
+    - In this case, click `Chapter 5 - Customizing WebDriver`
+
+If you want to see the solutions to Chapter 5's challenges:
+
+1. Click `Commits`
+
+2. Click on the `Challenge` or `(solution)` Commit
+    - In this case, click `Chapter 5 - Challenge`
+
+This will show you the code that I used to solve the challenge, but note that there are usually multiple solutions that are valid.
+
+
+## CHAPTERS
+------------
+
+Each chapter in this README is an overview with highlights of the chapter. These are helpful since it's easier to keep this up-to-date than videos.
+
+If you get stuck, take a look at the chapter's overview for some extra guidance.
+
+If you are still stuck, feel free to create an issue or ping me on the TAU Slack Channel.
+
 ## Chapter 1 - Machine Setup
 
 1. Requirements

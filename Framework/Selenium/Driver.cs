@@ -41,7 +41,8 @@ namespace Framework.Selenium
 
         public static Element FindElement(By by, string elementName)
         {
-            return new Element(Current.FindElement(by), elementName)
+            var element = Wait.Until(drvr => drvr.FindElement(by));
+            return new Element(element, elementName)
             {
                 FoundBy = by
             };

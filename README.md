@@ -222,6 +222,21 @@ Follow the video to for an explanation on the `Page Object Model` and `Page Map 
     - `[Category("cards")]`
     - We can use Categories when running our tests. To run only the tests with the Category of "cards", we would do:
         - `$ dotnet test --filter testcategory=cards`
+        
+> NOTE: After the recording, they changed the way some of their pages loaded. This includes the Cards page, so we will need to add a wait.
+
+```c#
+// initialize a WebDriverWait
+// make sure to bring in appropriate "using" statement
+var wait = new WebDriverWait(Driver.Current, TimeSpan.FromSeconds(10));
+
+// you can use it in GetCardByName()
+wait.Until(drvr => Map.Card(cardName).Displayed);
+
+// or maybe in the CardsPageMap's Card(string name) property
+wait.Until(drvr => drvr.FindElement(By.CssSelector($"a[href*='{name}']")))
+
+```
 
 
 ## Chapter 5 - Customizing WebDriver

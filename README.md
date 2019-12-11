@@ -228,7 +228,7 @@ Follow the video to for an explanation on the `Page Object Model` and `Page Map 
 ```c#
 // initialize a WebDriverWait
 // make sure to bring in appropriate "using" statement
-var wait = new WebDriverWait(Driver.Current, TimeSpan.FromSeconds(10));
+var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
 
 // you can use it in GetCardByName()
 wait.Until(drvr => Map.Card(cardName).Displayed);

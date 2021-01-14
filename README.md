@@ -23,9 +23,14 @@ If you want to see the solutions to Chapter 5's challenges:
 
 This will show you the code that I used to solve the challenge, but note that there are usually multiple solutions that are valid.
 
+## Known Issues
+
+> Can't build or "Driver" does not contain a definition for FindElement
+
+In chapter 5, you will have a `Royale.Pages` namespace. dotnet core will raise problems because the namespace shares the same name as the `Pages.cs` file and class! PLEASE CHANGE THE NAME OF `Pages.cs` and its class to something else like `PageWrapper.cs`! This will resolve build issues
+
 
 ## CHAPTERS
-------------
 
 Each chapter in this README is an overview with highlights of the chapter. These are helpful since it's easier to keep this up-to-date than videos.
 
